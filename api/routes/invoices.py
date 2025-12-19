@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
-from api.database import get_db
+from api.database import SessionLocal
 from api.models import models
 from api.schemas import schemas
 from typing import List
@@ -8,6 +8,13 @@ import csv
 import io
 
 router = APIRouter()
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 @router.get("/api/invoices", response_model=List[schemas.Invoice])
 def get_invoices(db: Session = Depends(get_db)):
@@ -36,7 +43,7 @@ def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
         db.commit()
 
 @router.post("/api/invoices/upload")
-async def upload_invoices_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_invoices_csv(file: UploadFile = File(...)):
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Invalid file type. Please upload a CSV.")
 
@@ -44,12 +51,25 @@ async def upload_invoices_csv(file: UploadFile = File(...), db: Session = Depend
     csv_file = io.StringIO(contents.decode('utf-8'))
     reader = csv.DictReader(csv_file)
 
-    for row in reader:
-        invoice_id = int(row.get("id"))
-        invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
-        if invoice:
-            invoice.total = float(row.get("total", invoice.total))
-            invoice.status = row.get("status", invoice.status)
+    db = SessionLocal()
+    try:
+        updated_count = 0
+        for row in reader:
+            invoice_id = int(row.get("id"))
+            invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
 
-    db.commit()
-    return {"message": "Invoices updated successfully from CSV."}
+            if invoice:
+                invoice.total = float(row.get("total", invoice.total))
+                invoice.status = row.get("status", invoice.status)
+                updated_count += 1
+
+        # Commit once after all updates
+        db.commit()
+
+        return {"message": f"Successfully updated {updated_count} invoices from CSV."}
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error updating invoices: {str(e)}")
+    finally:
+        db.close()
