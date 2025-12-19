@@ -52,24 +52,32 @@ async def upload_invoices_csv(file: UploadFile = File(...)):
     reader = csv.DictReader(csv_file)
 
     db = SessionLocal()
+    invoice_id = None # Initialize invoice_id
     try:
-        updated_count = 0
         for row in reader:
             invoice_id = int(row.get("id"))
             invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
 
             if invoice:
+                print(f"BEFORE: Invoice {invoice_id} - total={invoice.total}, status={invoice.status}")
                 invoice.total = float(row.get("total", invoice.total))
                 invoice.status = row.get("status", invoice.status)
-                updated_count += 1
+                print(f"AFTER: Invoice {invoice_id} - total={invoice.total}, status={invoice.status}")
 
-        # Commit once after all updates
+        print("About to commit...")
         db.commit()
+        print("Commit successful!")
 
-        return {"message": f"Successfully updated {updated_count} invoices from CSV."}
+        if invoice_id: # Check if invoice_id was set
+            # Verify immediately after commit
+            test_invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
+            print(f"VERIFY: Invoice {invoice_id} - total={test_invoice.total}, status={test_invoice.status}")
+
+        return {"message": "Invoices updated successfully from CSV."}
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error updating invoices: {str(e)}")
+        print(f"ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
     finally:
         db.close()
