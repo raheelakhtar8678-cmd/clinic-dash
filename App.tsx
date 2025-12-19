@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Appointments from './components/Appointments';
@@ -9,7 +10,7 @@ import Profile from './components/Profile';
 import Documents from './components/Documents';
 import PatientPortal from './components/PatientPortal';
 import Modal from './components/Modal';
-import { mockPatients, mockAppointments, mockInvoices, mockExpenses, mockDocuments } from './mockData';
+import { mockPatients, mockExpenses, mockDocuments } from './mockData';
 import { Patient, Appointment, AppointmentStatus, Invoice, InvoiceStatus, Expense, ClinicDocument } from './types';
 
 const App: React.FC = () => {
@@ -17,12 +18,24 @@ const App: React.FC = () => {
   const [userRole, setUserRole] = useState<'Admin' | 'Patient'>('Admin');
   
   const [patients] = useState<Patient[]>(mockPatients);
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
-  const [invoices] = useState<Invoice[]>(mockInvoices);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [expenses] = useState<Expense[]>(mockExpenses);
   const [documents] = useState<ClinicDocument[]>(mockDocuments);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        const response = await axios.get('/api/invoices');
+        setInvoices(response.data);
+      } catch (error) {
+        console.error("Error fetching invoices:", error);
+      }
+    };
+    fetchInvoices();
+  }, []);
 
   const handleQuickAction = (action: string) => {
     if (action === 'add-appointment') {
@@ -30,20 +43,25 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddAppointment = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddAppointment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newAppt: Appointment = {
-      id: `a${Date.now()}`,
-      patientId: 'p-new',
+    const newApptData = {
+      patient_id: 0, // Default value, will be updated
       patientName: formData.get('patientName') as string,
-      doctorId: 'd1',
+      doctor_id: 1, // Default value
       doctorName: 'Dr. Miller',
       datetime: new Date().toISOString(),
       status: AppointmentStatus.Scheduled
     };
-    setAppointments([newAppt, ...appointments]);
-    setIsModalOpen(false);
+
+    try {
+      const response = await axios.post('/api/appointments', newApptData);
+      setAppointments([response.data, ...appointments]);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error adding appointment:", error);
+    }
   };
 
   const renderContent = () => {
@@ -57,7 +75,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return <Dashboard appointments={appointments} invoices={invoices} onAddAppointment={() => setIsModalOpen(true)} />;
       case 'appointments':
-        return <Appointments appointments={appointments} onAdd={() => setIsModalOpen(true)} />;
+        return <Appointments appointments={appointments} setAppointments={setAppointments} onAdd={() => setIsModalOpen(true)} />;
       case 'patients':
         return <Patients patients={patients} />;
       case 'billing':
