@@ -1,6 +1,7 @@
 
-import React, 'react';
-import { Invoice, Expense, InvoiceStatus } from '../types';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { Invoice, Expense } from '../types';
 
 interface FinancialsProps {
   invoices: Invoice[];
@@ -8,12 +9,122 @@ interface FinancialsProps {
 }
 
 const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [googleSheetUrl, setGoogleSheetUrl] = useState<string>('');
+  const [syncStatus, setSyncStatus] = useState<string>('');
+  const [isGoogleConnected, setIsGoogleConnected] = useState<boolean>(false);
 
   const totalRevenue = invoices.reduce((acc, curr) => acc + curr.total, 0);
   const totalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setUploadStatus('Please select a file to upload.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const response = await axios.post('/api/invoices/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setUploadStatus(response.data.message);
+    } catch (error) {
+      setUploadStatus('Error uploading file. Please try again.');
+      console.error('Error uploading file:', error);
+    }
+  };
+
+  const handleGoogleConnect = () => {
+    // In a real application, this would trigger the OAuth flow.
+    // For now, we'll simulate a successful connection.
+    setIsGoogleConnected(true);
+    setSyncStatus('Connected to Google. Please enter a sheet URL.');
+  };
+
+  const handleSync = async () => {
+    if (!googleSheetUrl) {
+      setSyncStatus('Please enter a Google Sheet URL.');
+      return;
+    }
+    try {
+      const response = await axios.post('/api/google/sync', { url: googleSheetUrl });
+      setSyncStatus(response.data.message);
+    } catch (error) {
+      setSyncStatus('Error syncing with Google Sheet. Please check the URL and permissions.');
+      console.error('Error syncing with Google Sheet:', error);
+    }
+  };
+
   return (
     <div className="space-y-10 animate-float">
+      {/* CSV Upload Section */}
+      <div className="glass-card p-8 rounded-[2.5rem]">
+        <h3 className="font-extrabold text-slate-800 text-xl tracking-tighter">Bulk Update Invoices</h3>
+        <div className="mt-4 space-y-4">
+          <div>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Upload a CSV file</p>
+            <div className="flex items-center gap-4 mt-2">
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              />
+              <button
+                onClick={handleUpload}
+                className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-black text-xs shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+              >
+                Upload CSV
+              </button>
+            </div>
+            {uploadStatus && <p className="mt-2 text-sm font-bold text-slate-600">{uploadStatus}</p>}
+          </div>
+          <hr className="border-slate-100" />
+          <div>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Sync from Google Sheets</p>
+            <div className="flex items-center gap-4 mt-2">
+              {!isGoogleConnected ? (
+                <button
+                  onClick={handleGoogleConnect}
+                  className="bg-red-500 text-white px-6 py-2 rounded-xl font-black text-xs shadow-lg shadow-red-100 hover:bg-red-600 transition-all"
+                >
+                  Connect to Google
+                </button>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={googleSheetUrl}
+                    onChange={(e) => setGoogleSheetUrl(e.target.value)}
+                    placeholder="Enter Google Sheet URL"
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs outline-none focus:ring-2 focus:ring-sky-200 transition-all"
+                  />
+                  <button
+                    onClick={handleSync}
+                    className="bg-green-500 text-white px-6 py-2 rounded-xl font-black text-xs shadow-lg shadow-green-100 hover:bg-green-600 transition-all"
+                  >
+                    Sync Now
+                  </button>
+                </>
+              )}
+            </div>
+            {syncStatus && <p className="mt-2 text-sm font-bold text-slate-600">{syncStatus}</p>}
+          </div>
+        </div>
+      </div>
+
       {/* Dynamic Financial Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="glass-card p-10 rounded-[3rem] bg-indigo-500 text-white shadow-2xl shadow-indigo-200">
@@ -21,7 +132,7 @@ const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
            <div className="flex items-baseline gap-2">
              <span className="text-5xl font-black tracking-tighter">${(totalRevenue - totalExpenses).toLocaleString()}</span>
            </div>
-           <p className="text-xs font-bold mt-4 opacity-80">Margin: {((totalRevenue - totalExpenses) / totalRevenue * 100).toFixed(1)}%</p>
+           <p className="text-xs font-bold mt-4 opacity-80">Margin: {totalRevenue > 0 ? ((totalRevenue - totalExpenses) / totalRevenue * 100).toFixed(1) : 0}%</p>
         </div>
 
         <div className="lg:col-span-2 glass-card p-10 rounded-[3rem] bg-slate-900 text-white relative overflow-hidden">
