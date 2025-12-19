@@ -1,4 +1,3 @@
-
 export enum AppointmentStatus {
   Scheduled = 'Scheduled',
   Completed = 'Completed',
@@ -15,8 +14,9 @@ export enum InvoiceStatus {
 export interface Patient {
   id: string;
   name: string;
-  phone: string;
   email: string;
+  phone: string;
+  registeredDate: string;
 }
 
 export interface Appointment {
@@ -31,17 +31,18 @@ export interface Appointment {
 
 export interface Invoice {
   id: string;
-  appointmentId: string;
+  patientId: string;
   patientName: string;
+  appointmentId: string;
   total: number;
   status: InvoiceStatus;
-  createdAt: string;
-  description?: string;
+  items: { description: string; amount: number }[];
 }
 
 export interface Expense {
   id: string;
-  category: 'Salaries' | 'Rent' | 'Utilities' | 'Equipment';
+  category: string;
+  description: string;
   amount: number;
   date: string;
 }
@@ -50,14 +51,7 @@ export interface ClinicDocument {
   id: string;
   patientId: string;
   patientName: string;
-  type: 'Consent Form' | 'Billing Agreement' | 'Receipt';
-  status: 'Signed' | 'Pending' | 'Missing';
-  uploadedAt: string;
-}
-
-export interface DashboardStats {
-  todayAppointments: number;
-  todayRevenue: number;
-  unpaidInvoices: number;
-  noShowRate: number;
+  documentType: string;
+  uploadDate: string;
+  url: string;
 }

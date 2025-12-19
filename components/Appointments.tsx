@@ -1,21 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Appointment, AppointmentStatus } from '../types';
+import { Appointment, AppointmentStatus, InvoiceStatus } from '../types';
 
 interface AppointmentsProps {
   onAdd: () => void;
+  appointments: Appointment[];
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>;
 }
 
-const Appointments: React.FC<AppointmentsProps> = ({ onAdd }) => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+const Appointments: React.FC<AppointmentsProps> = ({ onAdd, appointments, setAppointments }) => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/appointments');
+        const response = await axios.get('/api/appointments');
         setAppointments(response.data);
       } catch (error) {
         console.error("Error fetching appointments:", error);
@@ -24,7 +25,25 @@ const Appointments: React.FC<AppointmentsProps> = ({ onAdd }) => {
       }
     };
     fetchAppointments();
-  }, []);
+  }, [setAppointments]);
+
+  const handleCreateInvoice = async (appointment: Appointment) => {
+    const newInvoice = {
+      appointment_id: appointment.id,
+      patient_id: appointment.patient_id,
+      total: 150.00, // Default value for now
+      status: InvoiceStatus.PENDING,
+      patientName: appointment.patientName,
+    };
+
+    try {
+      await axios.post('/api/invoices', newInvoice);
+      alert('Invoice created successfully!');
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      alert('Failed to create invoice.');
+    }
+  };
 
   const getStatusColor = (status: AppointmentStatus) => {
     switch (status) {
@@ -76,7 +95,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ onAdd }) => {
                 <th className="px-8 py-5">Assigned Practitioner</th>
                 <th className="px-8 py-5 text-center">Time</th>
                 <th className="px-8 py-5">Status</th>
-                <th className="px-8 py-5 text-right">Records</th>
+                <th className="px-8 py-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-sky-50/50">
@@ -102,7 +121,14 @@ const Appointments: React.FC<AppointmentsProps> = ({ onAdd }) => {
                     </span>
                   </td>
                   <td className="px-8 py-6 text-right">
-                    <button className="text-sky-500 hover:text-sky-700 font-black text-[10px] uppercase tracking-widest">View History</button>
+                  {appt.status === AppointmentStatus.Completed && (
+                      <button
+                        onClick={() => handleCreateInvoice(appt)}
+                        className="text-indigo-500 hover:text-indigo-700 font-black text-[10px] uppercase tracking-widest"
+                      >
+                        Create Invoice
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

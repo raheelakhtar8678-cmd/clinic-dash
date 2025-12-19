@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
-from backend.models.models import AppointmentStatus
+from api.models.models import AppointmentStatus, InvoiceStatus
 
 class PatientBase(BaseModel):
     name: str
@@ -30,6 +30,37 @@ class AppointmentCreate(AppointmentBase):
 
 class Appointment(AppointmentBase):
     id: int
+
+    class Config:
+        orm_mode = True
+
+class InvoiceBase(BaseModel):
+    appointment_id: int
+    patient_id: int
+    total: float
+    status: InvoiceStatus
+
+class InvoiceCreate(InvoiceBase):
+    pass
+
+class Invoice(InvoiceBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class PaymentBase(BaseModel):
+    invoice_id: int
+    amount: float
+    method: str
+
+class PaymentCreate(PaymentBase):
+    pass
+
+class Payment(PaymentBase):
+    id: int
+    date: datetime
 
     class Config:
         orm_mode = True

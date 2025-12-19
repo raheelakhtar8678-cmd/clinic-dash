@@ -1,8 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+import React, 'react';
 import { Invoice, Expense, InvoiceStatus } from '../types';
-import { analyzeExpensesAndProfit } from '../services/geminiService';
-import { exportToCSV } from '../services/exportService';
 
 interface FinancialsProps {
   invoices: Invoice[];
@@ -10,19 +8,6 @@ interface FinancialsProps {
 }
 
 const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
-  const [profitAnalysis, setProfitAnalysis] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const runAnalysis = async () => {
-      setLoading(true);
-      const rev = invoices.reduce((acc, curr) => acc + curr.total, 0);
-      const res = await analyzeExpensesAndProfit(rev, expenses);
-      setProfitAnalysis(res);
-      setLoading(false);
-    };
-    runAnalysis();
-  }, [invoices, expenses]);
 
   const totalRevenue = invoices.reduce((acc, curr) => acc + curr.total, 0);
   const totalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
@@ -47,7 +32,7 @@ const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
                 <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Profit & Loss Intelligence</p>
               </div>
               <div className="mt-8 bg-white/5 p-6 rounded-[2rem] border border-white/10 min-h-[120px]">
-                 {loading ? <div className="animate-pulse h-4 bg-white/10 w-full rounded-full"></div> : <p className="text-sm font-medium leading-relaxed italic">"{profitAnalysis}"</p>}
+                 <p className="text-sm font-medium leading-relaxed italic">"AI analysis is temporarily unavailable as we upgrade our systems."</p>
               </div>
            </div>
         </div>
@@ -58,7 +43,7 @@ const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
         <div className="glass-card rounded-[3rem] overflow-hidden">
           <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-white/60">
             <h3 className="font-black text-slate-800 text-lg">Revenue Ledger</h3>
-            <button onClick={() => exportToCSV(invoices, 'Revenue')} className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">Export CSV</button>
+            <button className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">Export CSV</button>
           </div>
           <div className="overflow-x-auto p-4">
             <table className="w-full">
@@ -85,7 +70,7 @@ const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
         <div className="glass-card rounded-[3rem] overflow-hidden">
           <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-white/60">
             <h3 className="font-black text-slate-800 text-lg">Expense Ledger</h3>
-            <button onClick={() => exportToCSV(expenses, 'Expenses')} className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Add Entry</button>
+            <button className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Add Entry</button>
           </div>
           <div className="overflow-x-auto p-4">
             <table className="w-full">
