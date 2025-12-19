@@ -1,14 +1,30 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Appointment, AppointmentStatus } from '../types';
 
 interface AppointmentsProps {
-  appointments: Appointment[];
   onAdd: () => void;
 }
 
-const Appointments: React.FC<AppointmentsProps> = ({ appointments, onAdd }) => {
+const Appointments: React.FC<AppointmentsProps> = ({ onAdd }) => {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/appointments');
+        setAppointments(response.data);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAppointments();
+  }, []);
 
   const getStatusColor = (status: AppointmentStatus) => {
     switch (status) {
@@ -50,45 +66,49 @@ const Appointments: React.FC<AppointmentsProps> = ({ appointments, onAdd }) => {
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-slate-50/50 text-slate-400 text-[10px] uppercase font-black tracking-widest">
-            <tr>
-              <th className="px-8 py-5">Patient Details</th>
-              <th className="px-8 py-5">Assigned Practitioner</th>
-              <th className="px-8 py-5 text-center">Time</th>
-              <th className="px-8 py-5">Status</th>
-              <th className="px-8 py-5 text-right">Records</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-sky-50/50">
-            {filtered.map((appt) => (
-              <tr key={appt.id} className="hover:bg-sky-50/30 transition-colors">
-                <td className="px-8 py-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-500 flex items-center justify-center font-black text-xs shadow-sm">
-                      {appt.patientName.charAt(0)}
-                    </div>
-                    <span className="font-bold text-slate-800 text-sm">{appt.patientName}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-6 text-slate-500 font-bold text-xs uppercase tracking-tight">{appt.doctorName}</td>
-                <td className="px-8 py-6 text-center">
-                   <span className="text-slate-800 font-black text-sm">
-                     {new Date(appt.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                   </span>
-                </td>
-                <td className="px-8 py-6">
-                  <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border border-white shadow-sm ${getStatusColor(appt.status)}`}>
-                    {appt.status}
-                  </span>
-                </td>
-                <td className="px-8 py-6 text-right">
-                  <button className="text-sky-500 hover:text-sky-700 font-black text-[10px] uppercase tracking-widest">View History</button>
-                </td>
+        {loading ? (
+          <div className="p-8 text-center">Loading appointments...</div>
+        ) : (
+          <table className="w-full text-left">
+            <thead className="bg-slate-50/50 text-slate-400 text-[10px] uppercase font-black tracking-widest">
+              <tr>
+                <th className="px-8 py-5">Patient Details</th>
+                <th className="px-8 py-5">Assigned Practitioner</th>
+                <th className="px-8 py-5 text-center">Time</th>
+                <th className="px-8 py-5">Status</th>
+                <th className="px-8 py-5 text-right">Records</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-sky-50/50">
+              {filtered.map((appt) => (
+                <tr key={appt.id} className="hover:bg-sky-50/30 transition-colors">
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-500 flex items-center justify-center font-black text-xs shadow-sm">
+                        {appt.patientName.charAt(0)}
+                      </div>
+                      <span className="font-bold text-slate-800 text-sm">{appt.patientName}</span>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6 text-slate-500 font-bold text-xs uppercase tracking-tight">{appt.doctorName}</td>
+                  <td className="px-8 py-6 text-center">
+                     <span className="text-slate-800 font-black text-sm">
+                       {new Date(appt.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                     </span>
+                  </td>
+                  <td className="px-8 py-6">
+                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border border-white shadow-sm ${getStatusColor(appt.status)}`}>
+                      {appt.status}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6 text-right">
+                    <button className="text-sky-500 hover:text-sky-700 font-black text-[10px] uppercase tracking-widest">View History</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
