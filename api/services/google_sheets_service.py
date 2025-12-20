@@ -15,6 +15,8 @@ def get_google_creds():
     """Shows basic usage of the Sheets API.
     Prints values from a sample spreadsheet.
     """
+    if os.getenv('CI'):
+        return None
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -36,6 +38,8 @@ def get_google_creds():
 
 def get_sheet_data(spreadsheet_id, range_name):
     creds = get_google_creds()
+    if not creds:
+        return []
     service = build('sheets', 'v4', credentials=creds)
 
     # Call the Sheets API
