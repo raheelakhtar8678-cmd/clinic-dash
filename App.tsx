@@ -6,10 +6,11 @@ import Appointments from './components/Appointments';
 import Patients from './components/Patients';
 import Billing from './components/Billing';
 import Documents from './components/Documents';
+import Financials from './components/Financials';
 import PatientPortal from './components/PatientPortal';
 import Profile from './components/Profile';
-import { Appointment, Invoice, Patient, ClinicDocument } from './types';
-import { mockAppointments, mockInvoices, mockPatients, mockDocuments } from './mockData';
+import { Appointment, Invoice, Patient, ClinicDocument, Expense } from './types';
+import { mockAppointments, mockInvoices, mockPatients, mockDocuments, mockExpenses } from './mockData';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -18,6 +19,7 @@ const App: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices);
   const [patients, setPatients] = useState<Patient[]>(mockPatients);
   const [documents, setDocuments] = useState<ClinicDocument[]>(mockDocuments);
+  const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
 
   const addAppointment = () => {
     const newAppointment: Appointment = {
@@ -41,7 +43,7 @@ const App: React.FC = () => {
       case 'patients':
         return <Patients patients={patients} />;
       case 'billing':
-        return <Billing invoices={invoices} />;
+        return <Financials invoices={invoices} expenses={expenses} />;
       case 'documents':
         return <Documents documents={documents} />;
       case 'profile':

@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
+import Papa from 'papaparse';
 import { Invoice, Expense } from '../types';
+import AddExpenseModal from './AddExpenseModal';
 
 interface FinancialsProps {
   invoices: Invoice[];
@@ -14,9 +16,36 @@ const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
   const [googleSheetUrl, setGoogleSheetUrl] = useState<string>('');
   const [syncStatus, setSyncStatus] = useState<string>('');
   const [isGoogleConnected, setIsGoogleConnected] = useState<boolean>(false);
+  const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState<boolean>(false);
+
+  const handleAddExpense = (newExpense: Omit<Expense, 'id'>) => {
+    // This is a mock implementation. In a real app, you'd call an API.
+    const expenseWithId = { ...newExpense, id: `EXP${Date.now()}` };
+    // You would then update the state in the parent component
+    console.log("Adding new expense:", expenseWithId);
+    setIsAddExpenseModalOpen(false);
+  };
 
   const totalRevenue = invoices.reduce((acc, curr) => acc + curr.total, 0);
   const totalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
+
+  const handleExportCsv = () => {
+    const csvRows = [
+      ['ID', 'Patient Name', 'Total'], // CSV header
+      ...invoices.map(inv => [inv.id, inv.patientName, inv.total.toString()])
+    ];
+
+    const csvContent = "data:text/csv;charset=utf-8,"
+      + csvRows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "revenue_ledger.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -24,26 +53,25 @@ const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
     }
   };
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (!selectedFile) {
       setUploadStatus('Please select a file to upload.');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
-    try {
-      const response = await axios.post('/api/invoices/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      setUploadStatus(response.data.message);
-    } catch (error) {
-      setUploadStatus('Error uploading file. Please try again.');
-      console.error('Error uploading file:', error);
-    }
+    Papa.parse(selectedFile, {
+      header: true,
+      complete: (results) => {
+        console.log('Parsed CSV data:', results.data);
+        // Here you would typically update your state with the parsed data.
+        // For example: setInvoices(results.data as Invoice[]);
+        setUploadStatus(`Successfully parsed ${results.data.length} records.`);
+      },
+      error: (error) => {
+        setUploadStatus('Error parsing CSV file.');
+        console.error('Error parsing CSV:', error);
+      }
+    });
   };
 
   const handleGoogleConnect = () => {
@@ -69,6 +97,13 @@ const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
 
   return (
     <div className="space-y-10 animate-float">
+      {isAddExpenseModalOpen && (
+        <AddExpenseModal
+          onClose={() => setIsAddExpenseModalOpen(false)}
+          onAddExpense={handleAddExpense}
+        />
+      )}
+
       {/* CSV Upload Section */}
       <div className="glass-card p-8 rounded-[2.5rem]">
         <h3 className="font-extrabold text-slate-800 text-xl tracking-tighter">Bulk Update Invoices</h3>
@@ -154,7 +189,12 @@ const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
         <div className="glass-card rounded-[3rem] overflow-hidden">
           <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-white/60">
             <h3 className="font-black text-slate-800 text-lg">Revenue Ledger</h3>
-            <button className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">Export CSV</button>
+            <button
+              onClick={handleExportCsv}
+              className="text-[9px] font-black text-indigo-500 uppercase tracking-widest"
+            >
+              Export CSV
+            </button>
           </div>
           <div className="overflow-x-auto p-4">
             <table className="w-full">
@@ -181,7 +221,12 @@ const Financials: React.FC<FinancialsProps> = ({ invoices, expenses }) => {
         <div className="glass-card rounded-[3rem] overflow-hidden">
           <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-white/60">
             <h3 className="font-black text-slate-800 text-lg">Expense Ledger</h3>
-            <button className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Add Entry</button>
+            <button
+              onClick={() => setIsAddExpenseModalOpen(true)}
+              className="text-[9px] font-black text-slate-400 uppercase tracking-widest"
+            >
+              Add Entry
+            </button>
           </div>
           <div className="overflow-x-auto p-4">
             <table className="w-full">

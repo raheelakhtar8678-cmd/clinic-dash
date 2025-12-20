@@ -79,11 +79,53 @@ const Dashboard: React.FC<DashboardProps> = ({ appointments, invoices, onAddAppo
     fetchData();
   }, [appointments, invoices, mockInsights]);
 
+  const [pendingInvoices, setPendingInvoices] = useState(0);
+  const [newPatients24h, setNewPatients24h] = useState(0);
+  const [appointments24h, setAppointments24h] = useState(0);
+  const [revenueToday, setRevenueToday] = useState(0);
+  const [revenueLast7Days, setRevenueLast7Days] = useState(0);
+  const [revenueThisMonth, setRevenueThisMonth] = useState(0);
+
+  useEffect(() => {
+    const today = new Date();
+    const yesterday = new Date(Date.now() - 86400000);
+
+    const pending = invoices.filter(inv => inv.status === InvoiceStatus.Pending).length;
+    setPendingInvoices(pending);
+
+    const newAppointments = appointments.filter(apt => new Date(apt.datetime) > yesterday);
+    setAppointments24h(newAppointments.length);
+
+    // This is a simplified way to determine "new" patients.
+    const newPatientIds = new Set(newAppointments.map(a => a.patientId));
+    setNewPatients24h(newPatientIds.size);
+
+    const todayStr = today.toISOString().split('T')[0];
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const revToday = invoices
+      .filter(inv => inv.createdAt === todayStr)
+      .reduce((sum, inv) => sum + inv.total, 0);
+    setRevenueToday(revToday);
+
+    const rev7Days = invoices
+      .filter(inv => new Date(inv.createdAt) >= sevenDaysAgo)
+      .reduce((sum, inv) => sum + inv.total, 0);
+    setRevenueLast7Days(rev7Days);
+
+    const revMonth = invoices
+      .filter(inv => new Date(inv.createdAt) >= startOfMonth)
+      .reduce((sum, inv) => sum + inv.total, 0);
+    setRevenueThisMonth(revMonth);
+
+  }, [invoices, appointments]);
+
   const stats = [
-    { label: "Active Flow", value: appointments.length, sub: "Live queue", icon: "🏥", trend: "+4" },
-    { label: "Gross Billing", value: `$${invoices.reduce((acc, curr) => acc + curr.total, 0).toLocaleString()}`, sub: "24h Cycle", icon: "💰", trend: "+12%" },
-    { label: "Success Rate", value: "94.2%", sub: "Visit Completion", icon: "✅", trend: "+1.2%" },
-    { label: "Avg Processing", value: "14m", sub: "Patient Intake", icon: "⏱️", trend: "-2m" },
+    { label: "Pending Invoices", value: pendingInvoices, sub: "Awaiting payment", icon: "🧾", trend: "+2" },
+    { label: "Gross Billing", value: `$${invoices.reduce((acc, curr) => acc + curr.total, 0).toLocaleString()}`, sub: "All time", icon: "💰", trend: "+12%" },
+    { label: "New Patients (24h)", value: newPatients24h, sub: "Last 24 hours", icon: "🧑‍🤝‍🧑", trend: "+3" },
+    { label: "Appointments (24h)", value: appointments24h, sub: "Last 24 hours", icon: "🏥", trend: "+5" },
   ];
 
   return (
@@ -108,6 +150,25 @@ const Dashboard: React.FC<DashboardProps> = ({ appointments, invoices, onAddAppo
           >
             Sync Data
           </button>
+        </div>
+      </div>
+
+      {/* Revenue Breakdown */}
+      <div className="glass-card p-8 rounded-[2.5rem]">
+        <h3 className="text-xl font-black text-slate-800 tracking-tighter">Revenue Breakdown</h3>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center">
+            <p className="text-sm font-bold text-slate-500">Today</p>
+            <p className="text-2xl font-black text-indigo-600">${revenueToday.toLocaleString()}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-bold text-slate-500">Last 7 Days</p>
+            <p className="text-2xl font-black text-indigo-600">${revenueLast7Days.toLocaleString()}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-bold text-slate-500">This Month</p>
+            <p className="text-2xl font-black text-indigo-600">${revenueThisMonth.toLocaleString()}</p>
+          </div>
         </div>
       </div>
 
