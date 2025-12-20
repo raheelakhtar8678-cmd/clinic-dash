@@ -52,10 +52,13 @@ async def upload_invoices_csv(file: UploadFile = File(...)):
     reader = csv.DictReader(csv_file)
 
     db = SessionLocal()
-    invoice_id = None # Initialize invoice_id
+    invoice_id = None  # Initialize invoice_id
     try:
         for row in reader:
-            invoice_id = int(row.get("id"))
+            invoice_id_str = row.get("id")
+            if invoice_id_str is None:
+                continue
+            invoice_id = int(invoice_id_str)
             invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
 
             if invoice:

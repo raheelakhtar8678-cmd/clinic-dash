@@ -1,9 +1,10 @@
 from sqlalchemy import Column, Integer, String, DateTime, Enum, Float, ForeignKey
+from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm import declarative_base
 from datetime import datetime
 import enum
 
-Base = declarative_base()
+Base: DeclarativeMeta = declarative_base()
 
 class AppointmentStatus(str, enum.Enum):
     SCHEDULED = "Scheduled"

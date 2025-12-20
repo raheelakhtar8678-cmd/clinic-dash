@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 client = TestClient(app)
 
-@patch('api.services.google_sheets_service.get_sheet_data')
+@patch('api.routes.google_sheets.get_sheet_data')
 def test_sync_google_sheet(mock_get_sheet_data):
     # First, create an appointment to associate the invoice with
     appointment_data = {
