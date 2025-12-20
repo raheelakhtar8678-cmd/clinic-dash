@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Invoice } from '../types';
-import { explainInvoiceForPatient } from '../services/geminiService';
+import { explainInvoiceForPatient } from '@/services/api';
 
 interface PatientPortalProps {
   invoices: Invoice[];

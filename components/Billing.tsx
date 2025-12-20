@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Invoice, InvoiceStatus } from '../types';
-import { runFinancialAudit } from '../services/geminiService';
+// import { runFinancialAudit } from '../services/geminiService';
 import { exportToCSV, printToPDF } from '../services/exportService';
 
 interface BillingProps {
@@ -64,17 +64,23 @@ const Billing: React.FC<BillingProps> = ({ invoices }) => {
                 {auditReport}
              </div>
            ) : (
-             <button 
-               onClick={startAudit}
-               disabled={auditing}
-               className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-slate-200 hover:bg-slate-800 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-4"
-             >
-               {auditing ? (
-                 <><span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span> Processing Analysis...</>
-               ) : (
-                 <>🚀 Initialize AI Financial Audit</>
-               )}
-             </button>
+            //  <button
+            //    onClick={startAudit}
+            //    disabled={auditing}
+            //    className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-slate-200 hover:bg-slate-800 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-4"
+            //  >
+            //    {auditing ? (
+            //      <><span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span> Processing Analysis...</>
+            //    ) : (
+            //      <>🚀 Initialize AI Financial Audit</>
+            //    )}
+            //  </button>
+            <button
+            disabled={true}
+            className="bg-slate-400 text-white px-10 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-slate-200"
+          >
+            <>🚀 AI Financial Audit (Temporarily Disabled)</>
+          </button>
            )}
         </div>
         <div className="hidden xl:flex w-64 h-64 bg-white rounded-[3.5rem] border-2 border-dashed border-sky-100 items-center justify-center text-6xl shadow-inner relative">
