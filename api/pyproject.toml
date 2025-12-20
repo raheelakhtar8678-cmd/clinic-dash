@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clinic-dash-api"
+version = "0.1.0"
+description = "The backend API for the Clinic Dash application."
+readme = "README.md"
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy",
+    "pydantic",
+    "python-multipart",
+    "google-api-python-client",
+    "google-auth-oauthlib",
+    "google-generativeai",
+]
