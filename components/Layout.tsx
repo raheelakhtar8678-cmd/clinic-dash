@@ -22,12 +22,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, onQu
     { id: 'documents', label: 'Vault', icon: '📑' },
   ];
 
-  const patientMenu = [
-    { id: 'portal', label: 'My Invoices', icon: '🧾' },
-    { id: 'support', label: 'Billing Help', icon: '💬' },
-  ];
-
-  const currentMenu = userRole === 'Admin' ? adminMenu : patientMenu;
+  const currentMenu = adminMenu;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -69,13 +64,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, onQu
           </div>
 
           <div className="flex items-center gap-5">
-             <button 
-               onClick={() => setUserRole(userRole === 'Admin' ? 'Patient' : 'Admin')}
-               className="text-[9px] font-black uppercase tracking-widest text-slate-400 border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors"
-             >
-               Switch to {userRole === 'Admin' ? 'Patient' : 'Admin'}
-             </button>
-
              <div className="relative">
                <button 
                  onClick={() => setNotifsOpen(!notifsOpen)}
@@ -122,7 +110,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, onQu
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Role</p>
                        <p className="text-sm font-black text-slate-800">{userRole}</p>
                     </div>
-                    <button className="w-full text-left px-5 py-3 rounded-xl hover:bg-slate-50 text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all">Settings</button>
+                    <button onClick={() => setActiveTab('profile')} className="w-full text-left px-5 py-3 rounded-xl hover:bg-slate-50 text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all">Settings</button>
                     <button className="w-full text-left px-5 py-3 rounded-xl hover:bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-widest transition-all">Log Out</button>
                  </div>
                )}

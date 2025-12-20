@@ -26,6 +26,16 @@ export const getOperationalInsights = async (dataSummary: string): Promise<{ bil
   }
 };
 
+export const syncGoogleSheet = async (url: string) => {
+  try {
+    const response = await apiClient.post('/google/sync', { url });
+    return response.data;
+  } catch (error) {
+    console.error('Error syncing Google Sheet:', error);
+    throw error;
+  }
+};
+
 export const explainInvoiceForPatient = async (invoiceDetails: string, userQuestion: string) => {
   try {
     const response = await apiClient.post('/gemini/explain-invoice', {

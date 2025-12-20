@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
-import { getOperationalInsights } from '@/services/api';
+import { getOperationalInsights, syncGoogleSheet } from '../services/api';
 import { Appointment, Invoice, AppointmentStatus, InvoiceStatus } from '../types';
 
 interface DashboardProps {
@@ -17,6 +17,21 @@ const Dashboard: React.FC<DashboardProps> = ({ appointments, invoices, onAddAppo
     noShowInsight: "Analyzing attendance patterns...",
   });
   const [loading, setLoading] = useState(!mockInsights);
+  const [sheetUrl, setSheetUrl] = useState('');
+
+  const handleSync = async () => {
+    if (!sheetUrl) {
+      alert('Please enter a Google Sheet URL.');
+      return;
+    }
+    try {
+      const result = await syncGoogleSheet(sheetUrl);
+      console.log('Sync result:', result);
+      alert('Data synced successfully!');
+    } catch (error) {
+      alert('Failed to sync data. Please check the URL and try again.');
+    }
+  };
 
   const revenueData = [
     { name: 'Mon', revenue: 2400, patients: 12 },
@@ -73,6 +88,29 @@ const Dashboard: React.FC<DashboardProps> = ({ appointments, invoices, onAddAppo
 
   return (
     <div className="space-y-10 pb-12 animate-float">
+      {/* Google Sheets Sync */}
+      <div className="glass-card p-8 rounded-[2.5rem]">
+        <h3 className="text-xl font-black text-slate-800 tracking-tighter">Sync with Google Sheets</h3>
+        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
+          Update dashboard data from your Google Sheet.
+        </p>
+        <div className="mt-4 flex gap-4">
+          <input
+            type="text"
+            placeholder="Paste Google Sheet URL here"
+            className="flex-grow p-4 rounded-xl border border-slate-200"
+            value={sheetUrl}
+            onChange={(e) => setSheetUrl(e.target.value)}
+          />
+          <button
+            onClick={handleSync}
+            className="bg-indigo-500 text-white px-6 py-3 rounded-2xl font-black text-xs shadow-lg shadow-indigo-100 hover:bg-indigo-600 transition-all"
+          >
+            Sync Data
+          </button>
+        </div>
+      </div>
+
       {/* Dynamic Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, idx) => (
