@@ -1,19 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
-import { getOperationalInsights, getNoShowInsights } from '../services/geminiService';
+import { getOperationalInsights } from '@/services/api';
 import { Appointment, Invoice, AppointmentStatus, InvoiceStatus } from '../types';
 
 interface DashboardProps {
   appointments: Appointment[];
   invoices: Invoice[];
   onAddAppointment: () => void;
+  mockInsights?: { billingInsight: string; noShowInsight: string };
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ appointments, invoices, onAddAppointment }) => {
-  const [insights, setInsights] = useState<string>("");
-  const [noShowAnalysis, setNoShowAnalysis] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+const Dashboard: React.FC<DashboardProps> = ({ appointments, invoices, onAddAppointment, mockInsights }) => {
+  const [insights, setInsights] = useState<{ billingInsight: string; noShowInsight: string }>({
+    billingInsight: "Analyzing clinical data...",
+    noShowInsight: "Analyzing attendance patterns...",
+  });
+  const [loading, setLoading] = useState(!mockInsights);
 
   const revenueData = [
     { name: 'Mon', revenue: 2400, patients: 12 },
@@ -33,21 +36,33 @@ const Dashboard: React.FC<DashboardProps> = ({ appointments, invoices, onAddAppo
 
   useEffect(() => {
     const fetchData = async () => {
+      if (mockInsights) {
+        setInsights(mockInsights);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
-      const totalRev = invoices.reduce((acc, curr) => acc + curr.total, 0);
-      const nsCount = appointments.filter(a => a.status === AppointmentStatus.NoShow).length;
-      
-      const [opResult, nsResult] = await Promise.all([
-        getOperationalInsights(`$${totalRev} revenue, ${appointments.length} apps`),
-        getNoShowInsights(`${nsCount} no-shows out of ${appointments.length}`)
-      ]);
-      
-      setInsights(opResult || "AI: Analyzing clinical data...");
-      setNoShowAnalysis(nsResult || "AI: Synthesizing attendance patterns...");
-      setLoading(false);
+      try {
+        const totalRev = invoices.reduce((acc, curr) => acc + curr.total, 0);
+        const nsCount = appointments.filter(a => a.status === AppointmentStatus.NoShow).length;
+
+        const opResult = await getOperationalInsights(
+          `$${totalRev} revenue, ${appointments.length} appointments, ${nsCount} no-shows`
+        );
+
+        setInsights(opResult);
+      } catch (error) {
+        console.error("Failed to fetch insights:", error);
+        setInsights({
+          billingInsight: "Could not load insights.",
+          noShowInsight: "Could not load insights."
+        });
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
-  }, [appointments, invoices]);
+  }, [appointments, invoices, mockInsights]);
 
   const stats = [
     { label: "Active Flow", value: appointments.length, sub: "Live queue", icon: "🏥", trend: "+4" },
@@ -133,7 +148,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appointments, invoices, onAddAppo
                     </div>
                   ) : (
                     <p className="text-[13px] leading-relaxed text-sky-50 font-medium whitespace-pre-line italic">
-                      "{insights}"
+                      "{insights.billingInsight}"
                     </p>
                   )}
                </div>
@@ -187,7 +202,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appointments, invoices, onAddAppo
                     </div>
                   ) : (
                     <div className="text-[13.5px] leading-relaxed text-slate-700 font-bold whitespace-pre-line italic">
-                       {noShowAnalysis}
+                      "{insights.noShowInsight}"
                     </div>
                   )}
                </div>
