@@ -1,8 +1,8 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-pydantic
-python-multipart
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+sqlalchemy==2.0.25
+pydantic==2.6.1
+python-multipart==0.0.9
 google-api-python-client
 google-auth-oauthlib
 google-generativeai
