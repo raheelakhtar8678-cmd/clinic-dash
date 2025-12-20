@@ -6,4 +6,3 @@ python-multipart
 google-api-python-client
 google-auth-oauthlib
 google-generativeai
-PyYAML==6.0.3
