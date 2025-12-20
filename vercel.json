@@ -5,17 +5,13 @@
       "use": "@vercel/python"
     },
     {
-      "src": "package.json",
-      "use": "@vercel/vite"
+      "src": "package.json"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "api/main.py"
-    },
-    {
-      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
